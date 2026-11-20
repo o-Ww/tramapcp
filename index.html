@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assista e Conecte-se</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --fg: #14161a;
+    --muted: #5d6470;
+    --card: #ffffff;
+    --line: #dcdfe5;
+    --accent: #2f5bea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115;
+      --fg: #f1f2f4;
+      --muted: #9aa1ad;
+      --card: #181b21;
+      --line: #2a2e37;
+      --accent: #6f8fff;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .wrap { width: 100%; max-width: 720px; }
+
+  .screen[hidden] { display: none; }
+
+  h1 {
+    font-size: clamp(1.4rem, 4vw, 1.9rem);
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  p.sub { color: var(--muted); margin: 0 0 24px; }
+
+  /* Vídeo */
+  .player-box {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .player-box iframe { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  .actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+
+  .skip {
+    font: inherit;
+    font-weight: 600;
+    color: var(--fg);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+  .skip:hover { border-color: var(--accent); color: var(--accent); }
+  .skip:focus-visible, .link-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  /* Botões finais */
+  .links { display: grid; gap: 12px; }
+  .link-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-decoration: none;
+    color: #fff;
+  }
+  .link-btn:hover { filter: brightness(1.08); }
+  .instagram { background: linear-gradient(45deg, #f09433, #dc2743 55%, #bc1888); }
+  .whatsapp  { background: #1faa59; }
+  .site      { background: #2f5bea; }
+
+  .replay {
+    margin-top: 20px;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: var(--muted);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+  <main class="wrap">
+
+    <!-- Tela 1: vídeo -->
+    <section id="screen-video" class="screen">
+      <div class="player-box"><div id="player"></div></div>
+      <div class="actions">
+        <button class="skip" id="skip" type="button">Pular vídeo</button>
+      </div>
+    </section>
+
+    <!-- Tela 2: botões -->
+    <section id="screen-links" class="screen" hidden>
+      <h1>Fale com a gente</h1>
+      <p class="sub">Escolha por onde quer continuar.</p>
+      <div class="links">
+        <a class="link-btn instagram" id="btn-instagram" target="_blank" rel="noopener">Instagram</a>
+        <a class="link-btn whatsapp"  id="btn-whatsapp"  target="_blank" rel="noopener">WhatsApp</a>
+        <a class="link-btn site"      id="btn-site"      target="_blank" rel="noopener">Visitar o site</a>
+      </div>
+      <button class="replay" id="replay" type="button">Assistir o vídeo de novo</button>
+    </section>
+
+  </main>
+
+<script>
+  // ====== CONFIGURE AQUI ======
+  const CONFIG = {
+    videoId: "M7lc1UVf-VE",              // o que vem depois de "v=" no link do YouTube
+    start: 0,                             // segundo em que o vídeo começa (opcional)
+    end: 0,                               // segundo em que o vídeo termina (0 = até o fim)
+    instagram: "https://instagram.com/seuusuario",
+    whatsapp: "https://wa.me/5511999999999?text=Ol%C3%A1!",  // número com DDI + DDD, só dígitos
+    site: "https://seusite.com.br"
+  };
+  // ============================
+
+  const screenVideo = document.getElementById("screen-video");
+  const screenLinks = document.getElementById("screen-links");
+  let player = null;
+
+  document.getElementById("btn-instagram").href = CONFIG.instagram;
+  document.getElementById("btn-whatsapp").href = CONFIG.whatsapp;
+  document.getElementById("btn-site").href = CONFIG.site;
+
+  function showLinks() {
+    if (player && player.pauseVideo) player.pauseVideo();
+    screenVideo.hidden = true;
+    screenLinks.hidden = false;
+  }
+
+  function showVideo() {
+    screenLinks.hidden = true;
+    screenVideo.hidden = false;
+    if (player && player.seekTo) {
+      player.seekTo(CONFIG.start || 0, true);
+      player.playVideo();
+    }
+  }
+
+  document.getElementById("skip").addEventListener("click", showLinks);
+  document.getElementById("replay").addEventListener("click", showVideo);
+
+  // Carrega a API de iframe do YouTube
+  const tag = document.createElement("script");
+  tag.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(tag);
+
+  window.onYouTubeIframeAPIReady = function () {
+    const vars = { rel: 0, modestbranding: 1, playsinline: 1 };
+    if (CONFIG.start) vars.start = CONFIG.start;
+    if (CONFIG.end) vars.end = CONFIG.end;
+
+    player = new YT.Player("player", {
+      videoId: CONFIG.videoId,
+      playerVars: vars,
+      events: {
+        onStateChange: function (e) {
+          if (e.data === YT.PlayerState.ENDED) showLinks();
+        }
+      }
+    });
+  };
+
+  screenVideo.hidden = false;
+</script>
+</body>
+</html>
